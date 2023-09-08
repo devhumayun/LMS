@@ -1,4 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express'
+import userRoute from './routes/user.route'
 export const app = express()
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -22,6 +23,9 @@ app.use(express.json({ limit: "50mb"}))
 app.use(cors({
     origin: ORGIN 
 }))
+
+// api routing
+app.use("/api/v1", userRoute)
 
 // testing api
 app.get("test", (req:Request, res:Response, next:NextFunction) => {
