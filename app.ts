@@ -3,6 +3,7 @@ export const app = express()
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
+import errorMiddleware from './middleware/errorMiddleware'
 
 // environment variable
 dotenv.config()
@@ -37,3 +38,5 @@ app.all("*", (req:Request, res:Response, next:NextFunction) => {
     next(error)
 })
 
+// global error
+app.use(errorMiddleware)
