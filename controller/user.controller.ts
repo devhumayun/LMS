@@ -1,3 +1,4 @@
+import { IUser } from "./../models/user.model";
 require("dotenv").config();
 import { NextFunction, Request, Response } from "express";
 import ejs from "ejs";
@@ -20,7 +21,7 @@ interface IRegistrationBody {
 export const userRegistration = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name, email, password, avater } = req.body;
+      const { name, email, password, avater }: IRegistrationBody = req.body;
 
       // check usre isexists
       const isUserExists = await User.findOne({ email });
@@ -91,3 +92,48 @@ export const createActivationToken = (user: any): IActivationToken => {
 
   return { token, activationCode };
 };
+
+// activate user
+
+interface IActivateUser {
+  activation_token: string;
+  activation_code: string;
+}
+
+export const activateUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { activation_token, activation_code } = req.body as IActivateUser;
+
+      const docoded: { user: IUser; activationCode: string } = jwt.verify(
+        activation_token,
+        process.env.ACTIVATION_TOKEN_SECRET as string
+      ) as { user: IUser; activationCode: string };
+
+      if (docoded.activationCode !== activation_code) {
+        return next(new ErrorHandler("Invalid activation code", 400));
+      }
+
+      const { name, email, password } = docoded.user;
+
+      const userCheck = await User.findOne({ email });
+      if (userCheck) {
+        return next(
+          new ErrorHandler("User already exists with this email", 400)
+        );
+      }
+
+      const user = await User.create({
+        name,
+        email,
+        password,
+      });
+
+      res.status(201).json({
+        success: true,
+      });
+    } catch (error) {
+      next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
