@@ -85,7 +85,6 @@ userSchema.methods.SignRefreshToken = function () {
 }
 
 
-
 const userModel: Model<IUser> = mongoose.model("User", userSchema)
 
 export default userModel

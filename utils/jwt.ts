@@ -1,3 +1,4 @@
+import  jwt  from 'jsonwebtoken';
 require("dotenv").config();
 import { IUser } from "../models/user.model";
 import { Response } from "express";
@@ -9,9 +10,7 @@ interface ITokenOptions {
   samaSite: "lax" | "strict" | "none" | undefined;
   secure?: boolean;
 }
-export const sendToken = (user: IUser, statusCode: number, res: Response) => {
-  const accessToken = user.SignAccessToken();
-  const refreshToken = user.SignRefreshToken();
+
 
   // fallback values
   const accessTokenExpire = parseInt(
@@ -23,30 +22,43 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
     10
   );
 
+
+  // cookie options
+  export const accessTokenOptions: ITokenOptions = {
+    expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
+    maxAge: accessTokenExpire * 60 * 60 * 1000,
+    httpOnly: true,
+    samaSite: "lax",
+  };
+  export const refreshTokenOptions: ITokenOptions = {
+    expires: new Date(Date.now() + accessTokenExpire * 24 * 60 * 60 * 1000),
+    maxAge: accessTokenExpire * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    samaSite: "lax",
+  };
+
+export const sendToken = (user: IUser, statusCode: number, res: Response) => {
+  const accessToken = user.SignAccessToken();
+  const refreshToken = user.SignRefreshToken();
+
   // upload session to redis
   redis.set(user._id, JSON.stringify(user) as any);
-  // cookie options
-  const accessTokenOptions: ITokenOptions = {
-    expires: new Date(Date.now() + accessTokenExpire * 1000),
-    maxAge: accessTokenExpire * 1000,
-    httpOnly: true,
-    samaSite: "lax",
-  };
-  const refreshTokenOptions: ITokenOptions = {
-    expires: new Date(Date.now() + accessTokenExpire * 1000),
-    maxAge: accessTokenExpire * 1000,
-    httpOnly: true,
-    samaSite: "lax",
-  };
 
   // only the secure true in porduction
   if (process.env.NODE_ENV === "production") {
     accessTokenOptions.secure = true;
   }
 
+  // const accessToken = jwt.sign({id: user._id}, process.env.ACCESS_TOKEN_KEY, {
+  //   expiresIn: "10m"
+  // })
+  // const refreshToken = jwt.sign({id: user._id}, process.env.REFRESH_TOKEN_KEY, {
+  //   expiresIn: "3d"
+  // })
+
   // send token to cookie
   res.cookie("access_token", accessToken, accessTokenOptions);
-  res.cookie("refresh_token", accessToken, refreshTokenOptions);
+  res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
   res.status(statusCode).json({
     success: true,
