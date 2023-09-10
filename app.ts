@@ -10,7 +10,7 @@ import errorMiddleware from './middleware/errorMiddleware'
 dotenv.config()
 export const PORT = process.env.SERVER_PORT
 export const mongoURL = process.env.MONGO_STRING
-export const redisURL = process.env.REDIS_URL
+// export const redisURL = process.env.REDIS_URL
 const ORGIN = process.env.ORGIN
 
 // body cookie-parser

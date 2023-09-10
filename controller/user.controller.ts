@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { IUser } from "./../models/user.model";
 require("dotenv").config();
 import { NextFunction, Request, Response } from "express";
@@ -8,6 +9,7 @@ import User from "../models/user.model";
 import jwt from "jsonwebtoken";
 import path from "path";
 import sendMail from "../utils/sendMail";
+import { sendToken } from '../utils/jwt';
 
 // user registration interface
 interface IRegistrationBody {
@@ -123,10 +125,14 @@ export const activateUser = CatchAsyncError(
         );
       }
 
+      // create hash password
+      const solt = await bcrypt.genSalt(10)
+      const hashPassword = await bcrypt.hash(password, solt)
+
       const user = await User.create({
         name,
         email,
-        password,
+        password: hashPassword,
       });
 
       res.status(201).json({
@@ -137,3 +143,50 @@ export const activateUser = CatchAsyncError(
     }
   }
 );
+
+
+// user login
+interface ILoginRequest {
+  email: string,
+  password: string
+}
+
+export const loginUser = CatchAsyncError(async (req:Request, res:Response, next:NextFunction) => {
+  try {
+    const { email, password } = req.body as ILoginRequest
+    if(!email || !password){
+      return next( new ErrorHandler("Email and Password is requried", 400))
+    }
+
+    // check user
+    const userCheck = await User.findOne({email}).select("+password")
+    if(!userCheck){
+      return next( new ErrorHandler("No user found by this email", 404))
+    }
+
+    const isPassword = await bcrypt.compare(password, userCheck.password)
+    if(!isPassword){
+      return next( new ErrorHandler("Wrong password", 401))
+    }
+
+    sendToken(userCheck, 200, res);
+
+  } catch (error) {
+    return next( new ErrorHandler(error.message, 400))
+  }
+})
+
+// logout user
+export const logout = CatchAsyncError(async (req:Request, res:Response, next:NextFunction) => {
+  try {
+    res.clearCookie("access_token")
+    res.clearCookie("refresh_token")
+
+    res.status(200).json({
+      success: true,
+      message: "Logout successfull"
+    })
+  } catch (error) {
+    return next( new ErrorHandler(error.message, 400))
+  }
+})
