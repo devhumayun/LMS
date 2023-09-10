@@ -273,15 +273,41 @@ export const updateAccessToken = CatchAsyncError(
   }
 );
 
-
 // get user info
-export const getUserInfo = CatchAsyncError(async (req:Request, res:Response, next:NextFunction) => {
-  try {
-    const userId = req.user?._id
-    console.log(userId);
-    
-    await getUserById(userId, res)
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 400));
+export const getUserInfo = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id;
+      console.log(userId);
+
+      await getUserById(userId, res);
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
   }
-})
+);
+
+// Social Login
+interface ISocialLogin {
+  email: string;
+  name: string;
+  avater: string;
+}
+
+export const socialLogin = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, email, avater } = req.body as ISocialLogin;
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        const newUser = await User.create({ name, email, avater });
+        sendToken(newUser, 201, res);
+      } else {
+        sendToken(user, 201, res);
+      }
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
