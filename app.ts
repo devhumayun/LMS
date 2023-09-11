@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express'
 import userRoute from './routes/user.route'
+import courseRoute from './routes/courseRoute'
 export const app = express()
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -26,6 +27,7 @@ app.use(cors({
 
 // api routing
 app.use("/api/v1", userRoute)
+app.use("/api/v1/course", courseRoute)
 
 // testing api
 app.get("test", (req:Request, res:Response, next:NextFunction) => {

@@ -5,7 +5,7 @@ import { CatchAsyncError } from './catchAsyncError'
 import ErrorHandler from '../utils/ErrorHandler'
 import { redis } from '../config/redis'
 
-
+//  Is user authenticated
 export const isAuthenticated = CatchAsyncError( async (req:Request, res:Response, next:NextFunction) => {
     const access_token = req.cookies.access_token
     if(!access_token){
@@ -27,3 +27,35 @@ export const isAuthenticated = CatchAsyncError( async (req:Request, res:Response
 
     next()
 })
+
+// role base permission
+// export const authorizedRoles = (...role: string[]) => {
+//     return (req: Request, res: Response, next: NextFunction) => {
+//       if (!role.includes(req.user?.role || "")) {
+//         return next(
+//           new ErrorHandler(
+//             `Role: ${req.user?.role} is not allowed to access this resources`,
+//             403
+//           )
+//         );
+//       }
+//     };
+// };
+
+// validate user role
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!roles.includes(req.user?.role || "")) {
+      return next(
+        new ErrorHandler(
+          `Role: ${req.user?.role} is not allowed to access this resource`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};
+
+
+  

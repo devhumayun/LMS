@@ -205,19 +205,6 @@ export const logout = CatchAsyncError(
   }
 );
 
-// role base permission
-export const authorizedRoles = (...role: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!role.includes(req.user?.role || "")) {
-      return next(
-        new ErrorHandler(
-          `Role: ${req.user?.role} is not allowed to access this resources`,
-          403
-        )
-      );
-    }
-  };
-};
 
 // update access token using refresh token
 export const updateAccessToken = CatchAsyncError(
