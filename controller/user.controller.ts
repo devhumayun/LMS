@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import cloudinary from "cloudinary";
 import { IUser } from "./../models/user.model";
 require("dotenv").config();
 import { NextFunction, Request, Response } from "express";
@@ -323,9 +324,9 @@ export const updateUserInfo = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { name, email } = req.body as IUserInfoUpdate;
-      const userId = req.user?._id;  
+      const userId = req.user?._id;
       console.log(userId);
-      
+
       const user = await User.findById(userId);
 
       if (email && user) {
@@ -359,9 +360,8 @@ interface IUpdatePassword {
 }
 
 export const updatepassword = CatchAsyncError(
-  async (req:Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-
       const { oldPassword, newPassword } = req.body as IUpdatePassword;
 
       const user = await User.findById(req.user?._id).select("+password");
@@ -369,13 +369,12 @@ export const updatepassword = CatchAsyncError(
         return next(new ErrorHandler("Old and new Password is requried", 400));
       }
 
-      if(user?.password === "undefined"){
+      if (user?.password === "undefined") {
         return next(new ErrorHandler("Invalid user", 400));
       }
-      
 
-      const isPasswordPatch = await bcrypt.compare(oldPassword, user.password)
-    
+      const isPasswordPatch = await bcrypt.compare(oldPassword, user.password);
+
       if (!isPasswordPatch) {
         return next(new ErrorHandler("Wrong old password", 400));
       }
@@ -397,22 +396,50 @@ export const updatepassword = CatchAsyncError(
 
 // user profile update
 interface IUserProfileUpdate {
-  avater: string
+  avater: string;
 }
 
-export const updateUserProfile = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) => {
-  try {
-    const {avater} = req.body as IUserProfileUpdate
-    const userId = req.user?._id
-    console.log(userId);
-    
-    res.status(200).json({
-      success: true,
-      userId
-    })
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 400));
+export const updateUserProfile = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { avater } = req.body as IUserProfileUpdate;
+      const userId = req.user?._id;
+
+      const user = await User.findById(userId);
+
+      if (avater && user) {
+        if (user?.avater?.public_id) {
+          cloudinary.v2.uploader.destroy(user?.avater?.public_id);
+          const myCloud = await cloudinary.v2.uploader.upload(avater, {
+            folder: "avaters",
+            width: 150,
+          });
+
+          user.avater = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+          };
+        } else {
+          const myCloud = await cloudinary.v2.uploader.upload(avater, {
+            folder: "avaters",
+            width: 150,
+          });
+
+          user.avater = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+          };
+        }
+      }
+
+      user?.save();
+      await redis.set(userId, JSON.stringify(user));
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
   }
-})
-
-
+);
