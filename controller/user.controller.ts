@@ -258,11 +258,13 @@ export const updateAccessToken = CatchAsyncError(
         }
       );
 
-      req.body = user;
+      req.user = user;
 
       // set token to cookie
       res.cookie("access_token", accessToken, accessTokenOptions);
       res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+      await redis.set(user._id, JSON.stringify(user), "EX", 604800);
 
       res.status(200).json({
         success: true,
@@ -280,8 +282,6 @@ export const getUserInfo = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?._id;
-      console.log(userId);
-
       await getUserById(userId, res);
     } catch (error) {
       return next(new ErrorHandler(error.message, 400));
@@ -316,35 +316,103 @@ export const socialLogin = CatchAsyncError(
 
 // update user info
 interface IUserInfoUpdate {
-  name: string,
-  email: string
+  name: string;
+  email: string;
 }
-export const updateUserInfo = CatchAsyncError(async(req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { name, email } = req.body as IUserInfoUpdate
-    const userId = req.user?._id
-    const user = await User.findById(userId)
+export const updateUserInfo = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, email } = req.body as IUserInfoUpdate;
+      const userId = req.user?._id;  
+      console.log(userId);
+      
+      const user = await User.findById(userId);
 
-    if(email && user){
-      const isEmailExists = await User.findOne({email})
-      if(isEmailExists){
-        return next(new ErrorHandler("Email already exists", 400));
+      if (email && user) {
+        const isEmailExists = await User.findOne({ email });
+        if (isEmailExists) {
+          return next(new ErrorHandler("Email already exists", 400));
+        }
+        user.email = email;
       }
-      user.email = email
-    }
-    if(name && user){
-      user.name = name
-    }
+      if (name && user) {
+        user.name = name;
+      }
 
-    user?.save()
-    await redis.set(userId, JSON.stringify(user))
+      user?.save();
+      await redis.set(userId, JSON.stringify(user));
 
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// update password
+interface IUpdatePassword {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const updatepassword = CatchAsyncError(
+  async (req:Request, res: Response, next: NextFunction) => {
+    try {
+
+      const { oldPassword, newPassword } = req.body as IUpdatePassword;
+
+      const user = await User.findById(req.user?._id).select("+password");
+      if (!oldPassword || !newPassword) {
+        return next(new ErrorHandler("Old and new Password is requried", 400));
+      }
+
+      if(user?.password === "undefined"){
+        return next(new ErrorHandler("Invalid user", 400));
+      }
+      
+
+      const isPasswordPatch = await bcrypt.compare(oldPassword, user.password)
+    
+      if (!isPasswordPatch) {
+        return next(new ErrorHandler("Wrong old password", 400));
+      }
+
+      user.password = newPassword;
+
+      await user.save();
+      await redis.set(req.user?._id, JSON.stringify(user));
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// user profile update
+interface IUserProfileUpdate {
+  avater: string
+}
+
+export const updateUserProfile = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) => {
+  try {
+    const {avater} = req.body as IUserProfileUpdate
+    const userId = req.user?._id
+    console.log(userId);
+    
     res.status(200).json({
-      success:true,
-      user
+      success: true,
+      userId
     })
-
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
 })
+
+

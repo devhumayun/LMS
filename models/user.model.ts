@@ -16,7 +16,7 @@ export interface IUser extends Document {
     role: string;
     isVerified: boolean;
     courses: Array<{courseId: string}>;
-    // comparePassword: ( password: string) => Promise<boolean>;
+    // comparePassword: (password: string) => Promise<boolean>;
     SignAccessToken: () => string;
     SignRefreshToken: () => string
 }
@@ -62,13 +62,13 @@ const userSchema: Schema<IUser> = new Schema({
 }, {timestamps: true})
 
 // passowrd hash before save
-// userSchema.pre<IUser>("save", async function (next) {
-//     if (!this.isModified("password")) {
-//       next();
-//     }
-//     this.password = await bcrypt.hash(this.password, 10);
-//     next();
-//   });
+userSchema.pre<IUser>("save", async function (next) {
+    if (!this.isModified("password")) {
+      next();
+    }
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  });
 // sign access token
 userSchema.methods.SignAccessToken = function () {
     return jwt.sign({id: this._id}, process.env.ACCESS_TOKEN_KEY || "", {
