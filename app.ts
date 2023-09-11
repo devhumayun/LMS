@@ -27,7 +27,7 @@ app.use(cors({
 
 // api routing
 app.use("/api/v1", userRoute)
-app.use("/api/v1/course", courseRoute)
+app.use("/api/v1", courseRoute)
 
 // testing api
 app.get("test", (req:Request, res:Response, next:NextFunction) => {
