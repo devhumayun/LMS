@@ -5,6 +5,10 @@ import cloudinary from "cloudinary";
 import { createCourse } from "../services/courseServices";
 import Course from "../models/courseModels";
 import { redis } from "../config/redis";
+import mongoose from "mongoose";
+import path from "path";
+import ejs from "ejs";
+import sendMail from "../utils/sendMail";
 
 // upload new course
 export const uploadCourse = CatchAsyncError(
@@ -82,11 +86,10 @@ export const getSingleCourse = CatchAsyncError(
           coursedata,
         });
       } else {
-        
         const course = await Course.findById(courseId).select(
           "-courseData.videoUrl -courseData.questions -courseData.links"
         );
-         // set course data in redis as cache
+        // set course data in redis as cache
         await redis.set(courseId, JSON.stringify(course));
 
         res.status(200).json({
@@ -116,7 +119,7 @@ export const allCourses = CatchAsyncError(
       } else {
         const courses = await Course.find();
 
-         // set course data in redis as cache
+        // set course data in redis as cache
         await redis.set("allCourses", JSON.stringify(courses));
 
         res.status(200).json({
@@ -124,6 +127,164 @@ export const allCourses = CatchAsyncError(
           courses,
         });
       }
+    } catch (error) {
+      next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// get course content
+export const getCourseContent = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req?.user?.courses;
+      const courseId = req.params.id;
+
+      // course is exists
+      const isExitsCourse = userCourseList.find(
+        (course: any) => course._id.toString() === courseId
+      );
+      if (!isExitsCourse) {
+        next(
+          new ErrorHandler(
+            "You are not eligiable to access to this resource. To access this resource purchased",
+            404
+          )
+        );
+      }
+
+      const course = await Course.findById(courseId);
+      const content = course?.courseData;
+
+      res.status(200).json({
+        success: true,
+        content,
+      });
+    } catch (error) {
+      next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+//  add question to course
+interface IAddQuestion {
+  question: string;
+  courseId: string;
+  contentId: string;
+}
+export const addQuestion = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { question, courseId, contentId }: IAddQuestion = req.body;
+
+      const course = await Course.findById(courseId);
+      // check courseid is exists on mongoose's courseid
+      if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        next(new ErrorHandler("Invalid Course id", 400));
+      }
+
+      // math the course content id
+      const courseContent = course?.courseData?.find((item: any) =>
+        item._id.equals(contentId)
+      );
+      if (!courseContent) {
+        next(new ErrorHandler("Invalid content id", 400));
+      }
+
+      const newQues: any = {
+        user: req.user,
+        question,
+        questionReplies: [],
+      };
+
+      // push the question to database
+      courseContent.questions.push(newQues);
+
+      course.save();
+
+      res.status(200).json({
+        success: true,
+        course,
+      });
+    } catch (error) {
+      next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// Questions replay
+interface IQuestionReplay {
+  answer: string;
+  courseId: string;
+  contentId: string;
+  questionId: string;
+}
+export const questionReplay = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { answer, courseId, contentId, questionId }: IQuestionReplay =
+        req.body;
+
+      const course = await Course.findById(courseId);
+      // check courseid is exists on mongoose's courseid
+      if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        next(new ErrorHandler("Invalid Course id", 400));
+      }
+
+      // math the course content id
+      const courseContent = course?.courseData?.find((item: any) =>
+        item._id.equals(contentId)
+      );
+      if (!courseContent) {
+        next(new ErrorHandler("Invalid content id", 400));
+      }
+
+      // match the question id
+      const question = courseContent.questions.find((item: any) =>
+        item._id.equals(questionId)
+      );
+      if (!question) {
+        next(new ErrorHandler("Invalid question id", 400));
+      }
+
+      const newAns: any = {
+        user: req.user,
+        answer,
+      };
+
+      question.questionReplies.push(newAns);
+
+      course.save();
+
+      if (req.user._id === question.user._id) {
+        // create a notification
+      } else {
+        const data = {
+          name: question.user.name,
+          title: courseContent.title,
+        };
+
+        const html = await ejs.renderFile(
+          path.join(__dirname, "../mails/question-reply.ejs"),
+          data
+        );
+
+        try {
+          sendMail({
+            email: question.user.email,
+            subject: "Question Reply",
+            template: "question-reply.ejs",
+            data,
+          });
+        } catch (error) {
+          next(new ErrorHandler(error.message, 400));
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        course,
+      });
     } catch (error) {
       next(new ErrorHandler(error.message, 400));
     }
