@@ -1,5 +1,5 @@
 import express from 'express'
-import { addQuestion, allCourses, editCourse, getCourseContent, getSingleCourse, questionReplay, uploadCourse } from '../controller/courseController'
+import { addQuestion, addReview, allCourses, editCourse, getCourseContent, getSingleCourse, questionReplay, uploadCourse } from '../controller/courseController'
 import { authorizeRoles, isAuthenticated } from '../middleware/auth'
 
 const router = express.Router()
@@ -14,6 +14,7 @@ router.get("/course-content/:id", isAuthenticated, getCourseContent)
 
 router.put('/add-question', isAuthenticated, addQuestion)
 router.put('/question-replay', isAuthenticated, questionReplay)
+router.put('/add-review/:id', isAuthenticated, addReview)
 
 
 export default router

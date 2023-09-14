@@ -290,3 +290,65 @@ export const questionReplay = CatchAsyncError(
     }
   }
 );
+
+
+// add review
+interface IAddReview {
+  review: string,
+  rating: number
+}
+export const addReview = CatchAsyncError(async(req: Request, res:Response, next: NextFunction) => {
+  try {
+    const userCourseList = req.user?.courses
+
+    res.status(200).json({
+      success: true,
+      userCourseList
+    });
+
+    return
+    const courseId = req.params.id;
+
+    // check if courseId already exists in userCourseList based on _id
+    const courseExists = userCourseList?.some(
+      (course: any) => course._id.toString() === courseId.toString()
+    );
+
+    if (!courseExists) {
+      return next(
+        new ErrorHandler("You are not eligible to access this course", 404)
+      );
+    }
+
+    const course = await Course.findById(courseId);
+
+    const { review, rating } = req.body as IAddReview;
+
+    const reviewData: any = {
+      user: req.user,
+      rating,
+      comment: review,
+    };
+
+    course?.reviews.push(reviewData);
+
+    let avg = 0;
+
+    course?.reviews.forEach((rev: any) => {
+      avg += rev.rating;
+    });
+
+    if (course) {
+      course.ratings = avg / course.reviews.length;
+    }
+
+    await course?.save();
+
+    await redis.set(courseId, JSON.stringify(course), "EX", 604800); // 7days
+
+    // create notification
+
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+})
