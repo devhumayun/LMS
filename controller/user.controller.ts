@@ -1,4 +1,7 @@
-import { getAllUsersServices } from './../services/userServices';
+import {
+  getAllUsersServices,
+  updateUserRoleServices,
+} from "./../services/userServices";
 import bcrypt from "bcryptjs";
 import cloudinary from "cloudinary";
 import { IUser } from "./../models/user.model";
@@ -205,7 +208,6 @@ export const logout = CatchAsyncError(
     }
   }
 );
-
 
 // update access token using refresh token
 export const updateAccessToken = CatchAsyncError(
@@ -432,12 +434,34 @@ export const updateUserProfile = CatchAsyncError(
   }
 );
 
-
-// get all users
-export const getAllusers = CatchAsyncError(async(req:Request, res: Response, next:NextFunction) => {
-  try {
-    getAllUsersServices(req,res,next)
-  } catch (error) {
-    next( new ErrorHandler(error.message, 500))
+// get all users only for admin
+export const getAllusers = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUsersServices(req, res, next);
+    } catch (error) {
+      next(new ErrorHandler(error.message, 500));
+    }
   }
-})
+);
+
+// update user role only for admin
+export const updateUserRole = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id, role } = req.body;
+
+      if (!id || !role) {
+        new ErrorHandler("Id and Role is requried", 400);
+      }
+      const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      next(new ErrorHandler(error.message, 500));
+    }
+  }
+);

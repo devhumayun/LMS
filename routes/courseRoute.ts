@@ -1,22 +1,35 @@
-import express from 'express'
-import { addQuestion, addReview, allCourses, editCourse, getAllCourse, getCourseContent, getSingleCourse, questionReplay, uploadCourse } from '../controller/courseController'
-import { authorizeRoles, isAuthenticated } from '../middleware/auth'
+import express from "express";
+import {
+  addQuestion,
+  addReview,
+  allCourses,
+  editCourse,
+  getAllCourse,
+  getCourseContent,
+  getSingleCourse,
+  questionReplay,
+  uploadCourse,
+} from "../controller/courseController";
+import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
-const router = express.Router()
+const router = express.Router();
 
 // user api route
-router.post("/course", isAuthenticated, uploadCourse)
-router.put("/edit-course/:id", isAuthenticated, editCourse)
-router.get("/course/:id", getSingleCourse)
-router.get("/course", allCourses)
+router.post("/course", isAuthenticated, uploadCourse);
+router.put("/edit-course/:id", isAuthenticated, editCourse);
+router.get("/course/:id", getSingleCourse);
+router.get("/course", allCourses);
 
-router.get("/course-content/:id", isAuthenticated, getCourseContent)
+router.get("/course-content/:id", isAuthenticated, getCourseContent);
 
-router.put('/add-question', isAuthenticated, addQuestion)
-router.put('/question-replay', isAuthenticated, questionReplay)
-router.put('/add-review/:id', isAuthenticated, addReview)
-router.get('/all-course', isAuthenticated, authorizeRoles("admin"), getAllCourse)
+router.put("/add-question", isAuthenticated, addQuestion);
+router.put("/question-replay", isAuthenticated, questionReplay);
+router.put("/add-review/:id", isAuthenticated, addReview);
+router.get(
+  "/all-course",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  getAllCourse
+);
 
-
-export default router
-
+export default router;
