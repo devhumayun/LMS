@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from 'express'
 import userRoute from './routes/user.route'
 import courseRoute from './routes/courseRoute'
 import orderRoute from './routes/orderRoute'
+import analyticRoute from './routes/analyticRouter'
 import notificationRoute from './routes/notificationRoute'
 export const app = express()
 import cors from 'cors'
@@ -32,6 +33,7 @@ app.use("/api/v1", userRoute)
 app.use("/api/v1", courseRoute)
 app.use("/api/v1", orderRoute)
 app.use("/api/v1", notificationRoute)
+app.use("/api/v1", analyticRoute)
 
 // testing api
 app.get("test", (req:Request, res:Response, next:NextFunction) => {
