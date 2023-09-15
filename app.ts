@@ -4,6 +4,7 @@ import courseRoute from './routes/courseRoute'
 import orderRoute from './routes/orderRoute'
 import analyticRoute from './routes/analyticRouter'
 import notificationRoute from './routes/notificationRoute'
+import layoutRoute from './routes/layoutRoute'
 export const app = express()
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -34,6 +35,7 @@ app.use("/api/v1", courseRoute)
 app.use("/api/v1", orderRoute)
 app.use("/api/v1", notificationRoute)
 app.use("/api/v1", analyticRoute)
+app.use("/api/v1", layoutRoute)
 
 // testing api
 app.get("test", (req:Request, res:Response, next:NextFunction) => {
