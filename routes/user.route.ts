@@ -1,6 +1,6 @@
 import express from 'express'
-import { activateUser, authorizedRoles, getUserInfo, loginUser, logout, socialLogin, updateAccessToken, updateUserInfo, updateUserProfile, updatepassword, userRegistration } from '../controller/user.controller'
-import { isAuthenticated } from '../middleware/auth'
+import { activateUser, getAllusers, getUserInfo, loginUser, logout, socialLogin, updateAccessToken, updateUserInfo, updateUserProfile, updatepassword, userRegistration } from '../controller/user.controller'
+import { authorizeRoles, isAuthenticated } from '../middleware/auth'
 const router = express.Router()
 
 // user api route
@@ -14,6 +14,9 @@ router.post("/social-login", socialLogin)
 router.put("/update-user", isAuthenticated, updateUserInfo)
 router.put("/update-password", isAuthenticated, updatepassword)
 router.put("/update-profile", isAuthenticated, updateUserProfile)
+router.get("/all-users", isAuthenticated, authorizeRoles("admin"), getAllusers)
+
+
 
 export default router
 

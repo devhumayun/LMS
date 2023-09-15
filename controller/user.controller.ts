@@ -1,3 +1,4 @@
+import { getAllUsersServices } from './../services/userServices';
 import bcrypt from "bcryptjs";
 import cloudinary from "cloudinary";
 import { IUser } from "./../models/user.model";
@@ -430,3 +431,13 @@ export const updateUserProfile = CatchAsyncError(
     }
   }
 );
+
+
+// get all users
+export const getAllusers = CatchAsyncError(async(req:Request, res: Response, next:NextFunction) => {
+  try {
+    getAllUsersServices(req,res,next)
+  } catch (error) {
+    next( new ErrorHandler(error.message, 500))
+  }
+})

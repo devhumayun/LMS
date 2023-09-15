@@ -352,3 +352,21 @@ export const addReview = CatchAsyncError(async(req: Request, res:Response, next:
     return next(new ErrorHandler(error.message, 500));
   }
 })
+
+
+
+// get All course only for admin
+export const getAllCourse = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) => {
+  try {
+    const allCourses = await Course.find().sort({createdAt: -1})
+    if(!allCourses){
+      next(new ErrorHandler("No Course Found", 500))
+    }
+    res.status(200).json({
+      success: true,
+      allCourses
+    })
+  } catch (error) {
+    next(new ErrorHandler(error.message, 500))
+  }
+})
