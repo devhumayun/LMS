@@ -228,7 +228,7 @@ export const updateAccessToken = CatchAsyncError(
       }
       const session = await redis.get(decoded.id as string);
       if (!session) {
-        return next(new ErrorHandler("Invalid Token. Please login", 404));
+        return next(new ErrorHandler("Your session has expired. Please login to access this resource", 404));
       }
 
       const user = JSON.parse(session);
