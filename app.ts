@@ -25,9 +25,12 @@ app.use(cookieParser())
 app.use(express.json({ limit: "50mb"}))
 
 // cors setting => cors orgin resource sharing 
-app.use(cors({
-    origin: ORGIN 
-}))
+app.use(
+    cors({
+      origin: ["http://localhost:3000"],
+      credentials: true,
+    })
+  );
 
 // api routing
 app.use("/api/v1", userRoute)
