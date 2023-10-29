@@ -143,7 +143,7 @@ export const activateUser = CatchAsyncError(
       const user = await User.create({
         name,
         email,
-        password: hashPassword,
+        password
       });
 
       res.status(201).json({
@@ -319,13 +319,6 @@ export const updateUserInfo = CatchAsyncError(
 
       const user = await User.findById(userId);
 
-      if (email && user) {
-        const isEmailExists = await User.findOne({ email });
-        if (isEmailExists) {
-          return next(new ErrorHandler("Email already exists", 400));
-        }
-        user.email = email;
-      }
       if (name && user) {
         user.name = name;
       }
@@ -356,7 +349,7 @@ export const updatepassword = CatchAsyncError(
 
       const user = await User.findById(req.user?._id).select("+password");
       if (!oldPassword || !newPassword) {
-        return next(new ErrorHandler("Old and new Password is requried", 400));
+        return next(new ErrorHandler("Please enter old and new password", 400));
       }
 
       if (user?.password === "undefined") {

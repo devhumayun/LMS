@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import errorMiddleware from './middleware/errorMiddleware'
 
+
 // environment variable
 dotenv.config()
 export const PORT = process.env.SERVER_PORT
