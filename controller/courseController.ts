@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import path from "path";
 import ejs from "ejs";
 import sendMail from "../utils/sendMail";
+import axios from "axios";
 
 // upload new course
 export const uploadCourse = CatchAsyncError(
@@ -393,3 +394,53 @@ export const deleteCourse = CatchAsyncError(
     }
   }
 );
+
+// generate video url
+export const generateVideoUrl = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    res.status(200).json("hello");
+  }
+);
+
+export const getVideoUrl = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { videoId } = req.body;
+      const response = await axios.post(
+        `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+        { ttl: 300 },
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Apisecret fV9ZZyVJeySmNBqmJMJsZfbU3d8oxdyRsAAIfqAfhKi8RImGBKi1KusUpoHbdEB9`,
+          },
+        }
+      );
+      res.json(response.data);
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+// try {
+//   res.status(200).json("hello")
+// } catch (error: any) {
+//   return next(new ErrorHandler(error.message, 400));
+// }
+// }
+
+// const { videoId } = req.body;
+// const response = await axios.post(
+//   `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+//   { ttl: 300 },
+//   {
+//     headers: {
+//       Accept: "application/json",
+//       "Content-Type": "application/json",
+//       Authorization: `Apisecret fV9ZZyVJeySmNBqmJMJsZfbU3d8oxdyRsAAIfqAfhKi8RImGBKi1KusUpoHbdEB9`,
+//     },
+//   }
+// );
+// res.json(response.data);

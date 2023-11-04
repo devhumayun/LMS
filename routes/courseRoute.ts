@@ -5,9 +5,11 @@ import {
   allCourses,
   deleteCourse,
   editCourse,
+  generateVideoUrl,
   getAllCourse,
   getCourseContent,
   getSingleCourse,
+  getVideoUrl,
   questionReplay,
   uploadCourse,
 } from "../controller/courseController";
@@ -15,7 +17,8 @@ import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 
 const router = express.Router();
 
-// user api route
+// course api route
+
 router.post("/course", isAuthenticated, uploadCourse);
 router.put("/edit-course/:id", isAuthenticated, editCourse);
 router.get("/course/:id", getSingleCourse);
@@ -32,6 +35,13 @@ router.get(
   authorizeRoles("admin"),
   getAllCourse
 );
+
+
+router.post("/getVideo-getVdoCipherOTP", generateVideoUrl);
+
+router.post("/getVideoUrl", getVideoUrl)
+
+
 router.delete(
   "/delete-course/:id",
   isAuthenticated,

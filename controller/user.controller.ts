@@ -21,6 +21,7 @@ import {
 } from "../utils/jwt";
 import { redis } from "../config/redis";
 import { getUserById } from "../services/userServices";
+import axios from "axios";
 
 // user registration interface
 interface IRegistrationBody {
@@ -483,3 +484,4 @@ export const deleteUser = CatchAsyncError(
     }
   }
 );
+
